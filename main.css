@@ -22,6 +22,11 @@ button {
 	text-transform: uppercase;
 }
 
+#container {
+	width: 1000px;
+	height: 1000px;
+}
+
 #info {
 	position: absolute;
 	top: 0px;

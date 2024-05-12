@@ -58,7 +58,7 @@
 		const geometry = new THREE.BoxGeometry(20, 20, 20);
 		let transformControl;
 
-		const ARC_SEGMENTS = 100;
+		const ARC_SEGMENTS = 40;
 
 		const splines = {};
 
@@ -110,7 +110,7 @@
 			plane.receiveShadow = true;
 			scene.add(plane);
 
-			const helper = new THREE.GridHelper(2000, 100);
+			const helper = new THREE.GridHelper(2000, 20);
 			helper.position.y = - 199;
 			helper.material.opacity = 0.25;
 			helper.material.transparent = true;
@@ -219,22 +219,30 @@
 				scene.add(spline.mesh);
 
 			}
+	// 		[new THREE.Vector3(-871.0246846379905, 598.5967448780741, -901.5082182666416),
+	// new THREE.Vector3(-315.0118663436993, 147.7095566975188, 68.53269599893201),
+	// new THREE.Vector3(676.0174174098237, -3.552568569510669, -425.38774577690276),
+	// new THREE.Vector3(375.26328656336466, 453.0451720749953, 253.88152061504607),
+	// new THREE.Vector3(-855.6602011581937, 404.2834861067285, 639.0907688993439),
+	// new THREE.Vector3(-687.3577638995763, 25.425378846327334, 300.9651326699863),
+	// new THREE.Vector3(710.4478660508158, 121.86437300449234, 468.74385591971406),
+	// new THREE.Vector3(721.3657331554466, 511.37962478745226, 840.5024381127196)]
 
-			load([new THREE.Vector3(-491.8590361645592, 573.2895117577276, -393.78080348191725),
-			new THREE.Vector3(-53.56300074753207, 171.49711742836848, -14.495472686253045),
-			new THREE.Vector3(177.46535603019066, -22.767704440140648, -59.11284885680068),
-			new THREE.Vector3(12.25266692194647, 459.4538036985774, 351.4481679454684),
-			new THREE.Vector3(407.14477185897977, 154.6829791948904, 336.5844020409447),
-			new THREE.Vector3(469.1177411745867, -137.20592040845372, -509.67496826816546),
-			new THREE.Vector3(12.660830020974963, -23.309177208174873, -772.3248101469085),
-			new THREE.Vector3(-391.7583272094863, -158.192154460209, -110.21677501738102),
-			new THREE.Vector3(331.36992281326445, 391.0508274280934, 518.6470110341133),
-			new THREE.Vector3(-280.7032776848028, -122.96266170468584, 729.4651445837912),
-			new THREE.Vector3(-278.3661958435289, 189.79284301992357, 468.05915317849536),
-			new THREE.Vector3(-717.2199943934976, -100.04074801752031, 297.0168118870651),
-			new THREE.Vector3(-244.73476602307434, 124.56748965013426, -241.19597142496642),
-			new THREE.Vector3(114.80176475568987, -36.69634066339083, -218.69738991578055),
-			new THREE.Vector3(504.168739564418, 585.0904493002654, -290.4024580093899)]);
+			load([new THREE.Vector3(-896.391023479346, 573.289566007808, -897.999189727983),
+	new THREE.Vector3(-53.56300074753207, 171.49711742836848, -14.495472686253045),
+	new THREE.Vector3(177.46535603019066, -22.767704440140648, -59.11284885680068),
+	new THREE.Vector3(12.25266692194647, 459.4538036985774, 351.4481679454684),
+	new THREE.Vector3(912.2464808932779, 154.6829791948904, 297.09382730861284),
+	new THREE.Vector3(469.1177411745867, -137.20592040845372, -509.67496826816546),
+	new THREE.Vector3(27.087455936653832, -23.309177208174873, -879.3564844110548),
+	new THREE.Vector3(-391.7583272094863, -158.192154460209, -110.21677501738102),
+	new THREE.Vector3(331.36992281326445, 391.0508274280934, 518.6470110341133),
+	new THREE.Vector3(-288.2549135301134, -122.96266170468584, 908.5409826916089),
+	new THREE.Vector3(-278.3661958435289, 189.79284301992357, 468.05915317849536),
+	new THREE.Vector3(-890.7544153498714, -100.04074801752031, 302.7396025897863),
+	new THREE.Vector3(-244.73476602307434, 124.56748965013426, -241.19597142496642),
+	new THREE.Vector3(114.80176475568987, -36.69634066339083, -218.69738991578055),
+	new THREE.Vector3(902.937441609792, 585.0904493002654, -900.4336994345074)]);
 
 			render();
 
@@ -338,26 +346,36 @@
 
 		}
 
+		function inMachineCoords(p) {
+			const x = (p.x + 1000.0) / 20.0 + 50.0;
+			const y = (p.z + 1000.0) / 20.0;
+			const z = (p.y + 1000.0) / -160 + 10.0;
+			return [x, y, z];
+		} 
+
 		function exportGcode() {
 
-			const strplace = [];
+			const gCodeLines = ['G21', 'G90']; // millimeter and absolute coords
 
-			// for (let i = 0; i < splinePointsLength; i++) {
-			// 	const p = splineHelperObjects[i].position;
-			// 	strplace.push(`G1 X${p.x} Y${p.y} Z${p.z}`);
-			// }
 			const spline = splines['chordal'];
 
 			const splineMesh = spline.mesh;
-			let p;
-			for (let i = 0; i < ARC_SEGMENTS; i++) {
-				const t = i / (ARC_SEGMENTS - 1);
+			const prev = new THREE.Vector3();
+			spline.getPoint(0.0, prev);
+			const [x0, y0, z0] = inMachineCoords(prev);
+			gCodeLines.push(`G0 X${x0.toFixed(4)} Y${y0.toFixed(4)} Z${z0.toFixed(4)}`);
+			for (let i = 1; i < ARC_SEGMENTS; i++) {
+				const t = i / ARC_SEGMENTS;
 				spline.getPoint(t, point);
-				strplace.push(`G1 X${point.x} Y${point.y} Z${point.z}`);
+				const [x, y, z] = inMachineCoords(point);
+				const feedRateMmPerMinute = Math.max(prev.distanceTo(point) / 1.5, 100);
+
+				gCodeLines.push(`G1 X${x.toFixed(4)} Y${y.toFixed(4)} Z${z.toFixed(4)} F${feedRateMmPerMinute}`);
 			}
+			gCodeLines.push('G0 Z0')
+			gCodeLines.push('G0 X0 Y0')
 
-
-			const code = strplace.join('\n');
+			const code = gCodeLines.join('\n');
 			console.log(code);
 			prompt('copy and paste code', code);
 
