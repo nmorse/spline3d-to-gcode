@@ -341,8 +341,26 @@
 			}
 
 			console.log(strplace.join(',\n'));
-			const code = '[' + (strplace.join(',\n\t')) + ']';
-			prompt('copy and paste code', code);
+			const data = '[' + (strplace.join(',\n\t')) + ']';
+
+            // 2. Create a Blob
+            const blob = new Blob([data], { type: 'text/javascript' });
+
+            // 3. Create a URL
+            const url = URL.createObjectURL(blob);
+
+            // 4. Create a Download Link
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'spline3d.js'; // Specify the name of the file
+
+            // 5. Trigger the Download
+            document.body.appendChild(a);
+            a.click();
+
+            // Cleanup
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url); // Free up memory
 
 		}
 
@@ -355,7 +373,30 @@
 
 		function exportGcode() {
 
-			const gCodeLines = ['G21', 'G90']; // millimeter and absolute coords
+
+		const gCodeLines = [
+			'O1000  ; Main program start',
+			'G21', 'G90', // millimeter and absolute coords
+			'; Call subroutine dip-tap O2000 then stroke O3000',
+			'M98 P2000',
+			'M98 P3000',
+			'M30    ; End of main program',
+			'O2000  ; Begin Definition of Subroutine dip-tap',
+			'G0 Z0 F100 ; Move up',
+			'G0 X10 Y10 F200 ; Move to X10 Y10',
+			'G01 Z4 F400 ; dip',
+			'G01 Z2',
+			'G01 Z4',
+			'G01 Z2',
+			'G01 X15',
+			'G01 X10',
+			'G01 X15',
+			'G0 Z0',
+			'M99    ; End of dip-tap subroutine',
+			'O3000  ; Begin Definition of Subroutine stroke',
+		];
+
+
 
 			const spline = splines['chordal'];
 
@@ -370,15 +411,32 @@
 				const [x, y, z] = inMachineCoords(point);
 				const feedRateMmPerMinute = Math.max(prev.distanceTo(point) / 1.5, 100);
 
-				gCodeLines.push(`G1 X${x.toFixed(4)} Y${y.toFixed(4)} Z${z.toFixed(4)} F${feedRateMmPerMinute}`);
+				gCodeLines.push(`G1 X${x.toFixed(4)} Y${y.toFixed(4)} Z${z.toFixed(4)} F${feedRateMmPerMinute.toFixed(1)}`);
 			}
 			gCodeLines.push('G0 Z0')
-			gCodeLines.push('G0 X0 Y0')
+			gCodeLines.push('G0 X0 Y0', 'M99 ; End of stroke subroutine')
 
-			const code = gCodeLines.join('\n');
-			console.log(code);
-			prompt('copy and paste code', code);
+			// 1. Create the data
+			const data = gCodeLines.join('\n');
 
+            // 2. Create a Blob
+            const blob = new Blob([data], { type: 'text/plain' });
+
+            // 3. Create a URL
+            const url = URL.createObjectURL(blob);
+
+            // 4. Create a Download Link
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'spline3d.gcode'; // Specify the name of the file
+
+            // 5. Trigger the Download
+            document.body.appendChild(a);
+            a.click();
+
+            // Cleanup
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url); // Free up memory
 		}
 
 		function load(new_positions) {
