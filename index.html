@@ -375,13 +375,8 @@
 
 
 		const gCodeLines = [
-			'O1000  ; Main program start',
 			'G21', 'G90', // millimeter and absolute coords
-			'; Call subroutine dip-tap O2000 then stroke O3000',
-			'M98 P2000',
-			'M98 P3000',
-			'M30    ; End of main program',
-			'O2000  ; Begin Definition of Subroutine dip-tap',
+			'; Begin dip-tap',
 			'G0 Z0 F100 ; Move up',
 			'G0 X10 Y10 F200 ; Move to X10 Y10',
 			'G01 Z4 F400 ; dip',
@@ -392,8 +387,8 @@
 			'G01 X10',
 			'G01 X15',
 			'G0 Z0',
-			'M99    ; End of dip-tap subroutine',
-			'O3000  ; Begin Definition of Subroutine stroke',
+			'; End dip-tap ',
+			'; Begin stroke',
 		];
 
 
@@ -414,7 +409,7 @@
 				gCodeLines.push(`G1 X${x.toFixed(4)} Y${y.toFixed(4)} Z${z.toFixed(4)} F${feedRateMmPerMinute.toFixed(1)}`);
 			}
 			gCodeLines.push('G0 Z0')
-			gCodeLines.push('G0 X0 Y0', 'M99 ; End of stroke subroutine')
+			gCodeLines.push('G0 X0 Y0','; End stroke ')
 
 			// 1. Create the data
 			const data = gCodeLines.join('\n');
