@@ -378,9 +378,9 @@
 		}
 
 		function inMachineCoords(p) {
-			const x = (p.x + 1000.0) / 20.0 + 50.0;
-			const y = (p.z + 1000.0) / 20.0;
-			const z = (p.y + 1000.0) / -160 + 10.0;
+			const x = Math.max(50, Math.min(150, (p.x + 1000.0) / 20.0 + 50.0));
+			const y = Math.max(0, Math.min(100, (p.z + 1000.0) / 20.0));
+			const z = Math.max(0, Math.min(5, (p.y + 1000.0) / -160 + 10.0));
 			return [x, y, z];
 		} 
 
@@ -417,9 +417,10 @@
 				const t = i / ARC_SEGMENTS;
 				spline.getPoint(t, point);
 				const [x, y, z] = inMachineCoords(point);
+				// TODO wouldn't be better to do this rate calc in MachineCoords
 				const feedRateMmPerMinute = Math.max(prev.distanceTo(point) / 1.5, 100);
 
-				gCodeLines.push(`G1 X${x.toFixed(4)} Y${y.toFixed(4)} Z${z.toFixed(4)} F${feedRateMmPerMinute.toFixed(1)}`);
+				gCodeLines.push(`G1 X${x.toFixed(3)} Y${y.toFixed(3)} Z${z.toFixed(3)} F${feedRateMmPerMinute.toFixed(0)}`);
 			}
 			gCodeLines.push('G0 Z0')
 			gCodeLines.push('G0 X0 Y0','; End stroke ')
