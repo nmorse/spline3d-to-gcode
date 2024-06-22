@@ -58,11 +58,11 @@
 		const geometry = new THREE.BoxGeometry(20, 20, 20);
 		let transformControl;
 
-		const ARC_SEGMENTS = 100;
+		const ARC_SEGMENTS = 1000;
 
 		const splines = {};
 
-		const params = {
+		const ip = {
 			uniform: true,
 			tension: 0.5,
 			centripetal: true,
@@ -70,15 +70,16 @@
 			addPoint: addPoint,
 			removePoint: removePoint,
 			exportSpline: exportSpline,
-			exportGcode: exportGcode
+			exportGcode: exportGcode,
+			xfn: "s(t*93)*900*s(t*3.14)",
+			yfn: "c(t*93)*100",
+			zfn: "c(t*93)*600*s(t*3.14)"
 		};
 
 		init();
 
 		function init() {
-
 			container = document.getElementById('container');
-
 			scene = new THREE.Scene();
 			scene.background = new THREE.Color(0xf0f0f0);
 			const width = 1000;
@@ -87,7 +88,6 @@
 			camera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, -10000, 10000);
 			camera.position.set(0, 0, 1000);
 			scene.add(camera);
-
 			scene.add(new THREE.AmbientLight(0xf0f0f0, 3));
 			const light = new THREE.SpotLight(0xffffff, 4.5);
 			light.position.set(0, 15000, 0);
@@ -124,20 +124,23 @@
 
 			const gui = new GUI();
 
-			gui.add(params, 'uniform').onChange(render);
-			gui.add(params, 'tension', 0, 1).step(0.01).onChange(function (value) {
+			gui.add(ip, 'uniform').onChange(render);
+			gui.add(ip, 'tension', 0, 1).step(0.01).onChange(function (value) {
 
 				splines.uniform.tension = value;
 				updateSplineOutline();
 				render();
 
 			});
-			gui.add(params, 'centripetal').onChange(render);
-			gui.add(params, 'chordal').onChange(render);
-			gui.add(params, 'addPoint');
-			gui.add(params, 'removePoint');
-			gui.add(params, 'exportSpline');
-			gui.add(params, 'exportGcode');
+			gui.add(ip, 'centripetal').onChange(render);
+			gui.add(ip, 'chordal').onChange(render);
+			gui.add(ip, 'addPoint');
+			gui.add(ip, 'removePoint');
+			gui.add(ip, 'exportSpline');
+			gui.add(ip, 'exportGcode');
+			gui.add(ip, 'xfn').onChange(render);
+			gui.add(ip, 'yfn').onChange(render);
+			gui.add(ip, 'zfn').onChange(render);
 			gui.open();
 
 			// Controls
@@ -250,12 +253,10 @@
 			// new THREE.Vector3(-244.73476602307434, 124.56748965013426, -241.19597142496642),
 			// new THREE.Vector3(114.80176475568987, -36.69634066339083, -218.69738991578055),
 			// new THREE.Vector3(902.937441609792, 585.0904493002654, -900.4336994345074)]
-			load([new THREE.Vector3(-896.391023479346, 573.289566007808, -613.3898666889511),
-	new THREE.Vector3(-53.56300074753207, -62.38180338076245, -14.495472686253045),
-	new THREE.Vector3(177.46535603019066, -22.767704440140648, -59.11284885680068),
-	new THREE.Vector3(33.25623000308098, -20.109578594246443, 359.9701051305256),
-	new THREE.Vector3(398.85381743635367, 52.248297224273244, 249.0438050973464),
-	new THREE.Vector3(679.7562883763367, 597.9396089084669, 670.637714086363)]);
+			load([new THREE.Vector3(-204.58838275538338, 71.30516721160441, -814.3670683562709),
+			new THREE.Vector3(-27.716192936237256, -36.68620155243352, -362.55389805597855),
+			new THREE.Vector3(-95.61090233695967, -55.55240055614232, 310.2940656195611),
+			new THREE.Vector3(-156.15770773743964, 189.65037482270816, 757.878177206513)]);
 
 			render();
 
@@ -320,24 +321,21 @@
 		}
 
 		function updateSplineOutline() {
-
+			const s = Math.sin
+			const c = Math.cos
 			for (const k in splines) {
 
 				const spline = splines[k];
 
 				const splineMesh = spline.mesh;
 				const position = splineMesh.geometry.attributes.position;
-
 				for (let i = 0; i < ARC_SEGMENTS; i++) {
 
-					const t = i / (ARC_SEGMENTS - 1);
+					const t = i / ARC_SEGMENTS;
 					spline.getPoint(t, point);
-					position.setXYZ(i, point.x, point.y, point.z);
-
+					position.setXYZ(i, point.x + eval(ip.xfn), point.y + eval(ip.yfn), point.z + eval(ip.zfn));
 				}
-
 				position.needsUpdate = true;
-
 			}
 
 		}
@@ -356,24 +354,24 @@
 			console.log(strplace.join(',\n'));
 			const data = '[' + (strplace.join(',\n\t')) + ']';
 
-            // 2. Create a Blob
-            const blob = new Blob([data], { type: 'text/javascript' });
+			// 2. Create a Blob
+			const blob = new Blob([data], { type: 'text/javascript' });
 
-            // 3. Create a URL
-            const url = URL.createObjectURL(blob);
+			// 3. Create a URL
+			const url = URL.createObjectURL(blob);
 
-            // 4. Create a Download Link
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'spline3d.js'; // Specify the name of the file
+			// 4. Create a Download Link
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = 'spline3d.js'; // Specify the name of the file
 
-            // 5. Trigger the Download
-            document.body.appendChild(a);
-            a.click();
+			// 5. Trigger the Download
+			document.body.appendChild(a);
+			a.click();
 
-            // Cleanup
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url); // Free up memory
+			// Cleanup
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url); // Free up memory
 
 		}
 
@@ -382,32 +380,32 @@
 			const y = Math.max(0, Math.min(100, (p.z + 1000.0) / 20.0));
 			const z = Math.max(0, Math.min(5, (p.y + 1000.0) / -160 + 10.0));
 			return [x, y, z];
-		} 
+		}
 
 		function exportGcode() {
-
-
-		const gCodeLines = [
-			'G21', 'G90', // millimeter and absolute coords
-			'; Begin dip-tap',
-			'G0 Z0 F100 ; Move up',
-			'G0 X10 Y10 F200 ; Move to X10 Y10',
-			'G01 Z4 F400 ; dip',
-			'G01 Z2',
-			'G01 Z4',
-			'G01 Z2',
-			'G01 X15',
-			'G01 X10',
-			'G01 X15',
-			'G0 Z0',
-			'; End dip-tap ',
-			'; Begin stroke',
-		];
+			const gCodeLines = [
+				`; ${JSON.stringify(ip)}`,
+				'G21', 'G90', // millimeter and absolute coords
+				'; Begin dip-tap',
+				'G0 Z0 F100 ; Move up',
+				'G0 X10 Y10 F200 ; Move to X10 Y10',
+				'G01 Z4 F400 ; dip',
+				'G01 Z2',
+				'G01 Z4',
+				'G01 Z2',
+				'G01 X15',
+				'G01 X10',
+				'G01 X15',
+				'G0 Z0',
+				'; End dip-tap ',
+				'; Begin stroke',
+			];
 
 
 
 			const spline = splines['chordal'];
-
+			const s = Math.sin
+			const c = Math.cos
 			const splineMesh = spline.mesh;
 			const prev = new THREE.Vector3();
 			spline.getPoint(0.0, prev);
@@ -416,6 +414,9 @@
 			for (let i = 1; i < ARC_SEGMENTS; i++) {
 				const t = i / ARC_SEGMENTS;
 				spline.getPoint(t, point);
+				point.x += eval(ip.xfn)
+				point.y += eval(ip.yfn)
+				point.z += eval(ip.zfn)
 				const [x, y, z] = inMachineCoords(point);
 				// TODO wouldn't be better to do this rate calc in MachineCoords
 				const feedRateMmPerMinute = Math.max(prev.distanceTo(point) / 1.5, 100);
@@ -423,29 +424,29 @@
 				gCodeLines.push(`G1 X${x.toFixed(3)} Y${y.toFixed(3)} Z${z.toFixed(3)} F${feedRateMmPerMinute.toFixed(0)}`);
 			}
 			gCodeLines.push('G0 Z0')
-			gCodeLines.push('G0 X0 Y0','; End stroke ')
+			gCodeLines.push('G0 X0 Y0', '; End stroke ')
 
 			// 1. Create the data
 			const data = gCodeLines.join('\n');
 
-            // 2. Create a Blob
-            const blob = new Blob([data], { type: 'text/plain' });
+			// 2. Create a Blob
+			const blob = new Blob([data], { type: 'text/plain' });
 
-            // 3. Create a URL
-            const url = URL.createObjectURL(blob);
+			// 3. Create a URL
+			const url = URL.createObjectURL(blob);
 
-            // 4. Create a Download Link
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'spline3d.gcode'; // Specify the name of the file
+			// 4. Create a Download Link
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = 'spline3d.gcode'; // Specify the name of the file
 
-            // 5. Trigger the Download
-            document.body.appendChild(a);
-            a.click();
+			// 5. Trigger the Download
+			document.body.appendChild(a);
+			a.click();
 
-            // Cleanup
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url); // Free up memory
+			// Cleanup
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url); // Free up memory
 		}
 
 		function load(new_positions) {
@@ -474,9 +475,9 @@
 
 		function render() {
 
-			splines.uniform.mesh.visible = params.uniform;
-			splines.centripetal.mesh.visible = params.centripetal;
-			splines.chordal.mesh.visible = params.chordal;
+			splines.uniform.mesh.visible = ip.uniform;
+			splines.centripetal.mesh.visible = ip.centripetal;
+			splines.chordal.mesh.visible = ip.chordal;
 			renderer.render(scene, camera);
 
 		}
