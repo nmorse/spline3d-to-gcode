@@ -58,32 +58,47 @@
 		const geometry = new THREE.BoxGeometry(20, 20, 20);
 		let transformControl;
 
-		const ARC_SEGMENTS = 1000;
+		const ARC_SEGMENTS = 2000;
 
 		const splines = {};
 
 		const ip = {
-			uniform: true,
-			tension: 0.5,
-			centripetal: true,
-			chordal: true,
-			addPoint: addPoint,
-			removePoint: removePoint,
-			exportSpline: exportSpline,
-			exportGcode: exportGcode,
-			xfn: "s(t*93)*900*s(t*3.14)",
-			yfn: "c(t*93)*100",
-			zfn: "c(t*93)*600*s(t*3.14)"
+			"uniform": false, "tension": 0.5, "centripetal": false, "chordal": true,
+			"xfn": "s(t*193)*500*s(t*3.1415)",
+			"yfn": "c(t*193)*100",
+			"zfn": "c(t*193)*900*s(t*3.1415)"
 		};
-
+		const width = 1500;
+		const height = 1000;
 		init();
+
+		function GridGeometry(width = 1, height = 1, wSeg = 1, hSeg = 1, tx = 0, ty = 0, lExt = [0, 0]) {
+			let seg = new THREE.Vector2(width / wSeg, height / hSeg);
+			let hlfSeg = seg.clone().multiplyScalar(0.5);
+
+			let pts = [];
+
+			for (let y = 0; y <= hSeg; y++) {
+				pts.push(
+					new THREE.Vector2(tx, y * seg.y + ty),
+					new THREE.Vector2(width + tx + (hlfSeg.x * lExt[0]), y * seg.y + ty)
+				)
+			}
+
+			for (let x = 0; x <= wSeg; x++) {
+				pts.push(
+					new THREE.Vector2(x * seg.x + tx, ty),
+					new THREE.Vector2(x * seg.x + tx, height + ty + (hlfSeg.y * lExt[1]))
+				)
+			}
+			return new THREE.BufferGeometry().setFromPoints(pts);
+		}
 
 		function init() {
 			container = document.getElementById('container');
 			scene = new THREE.Scene();
 			scene.background = new THREE.Color(0xf0f0f0);
-			const width = 1000;
-			const height = 1000;
+
 			//camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
 			camera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, -10000, 10000);
 			camera.position.set(0, 0, 1000);
@@ -101,7 +116,7 @@
 			light.shadow.mapSize.height = 1024;
 			scene.add(light);
 
-			const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
+			const planeGeometry = new THREE.PlaneGeometry(width * 2, height * 2);
 			planeGeometry.rotateX(- Math.PI / 2);
 			const planeMaterial = new THREE.ShadowMaterial({ color: 0x000000, opacity: 0.2 });
 
@@ -110,11 +125,18 @@
 			plane.receiveShadow = true;
 			scene.add(plane);
 
-			const helper = new THREE.GridHelper(2000, 20);
-			helper.position.y = - 199;
-			helper.material.opacity = 0.25;
-			helper.material.transparent = true;
-			scene.add(helper);
+			// const helper = new THREE.GridHelper(width * 2, 20);
+			// helper.position.y = - 199;
+			// helper.material.opacity = 0.25;
+			// helper.material.transparent = true;
+			// scene.add(helper);
+			const g2 = GridGeometry(width * 2, height * 2, 15, 10, -width, -height, [1, 1]);
+			g2.rotateX(Math.PI * 0.5);
+			//g2.translateX(-width)
+			//g2.translateY(-height)
+			let m2 = new THREE.LineBasicMaterial({ color: "gray" });
+			let grid2 = new THREE.LineSegments(g2, m2);
+			scene.add(grid2);
 
 			renderer = new THREE.WebGLRenderer({ antialias: true });
 			renderer.setPixelRatio(window.devicePixelRatio);
@@ -253,10 +275,7 @@
 			// new THREE.Vector3(-244.73476602307434, 124.56748965013426, -241.19597142496642),
 			// new THREE.Vector3(114.80176475568987, -36.69634066339083, -218.69738991578055),
 			// new THREE.Vector3(902.937441609792, 585.0904493002654, -900.4336994345074)]
-			load([new THREE.Vector3(-204.58838275538338, 71.30516721160441, -814.3670683562709),
-			new THREE.Vector3(-27.716192936237256, -36.68620155243352, -362.55389805597855),
-			new THREE.Vector3(-95.61090233695967, -55.55240055614232, 310.2940656195611),
-			new THREE.Vector3(-156.15770773743964, 189.65037482270816, 757.878177206513)]);
+			load([new THREE.Vector3(111.56546721968732, -62.32342595664549, 34.922424933634595), new THREE.Vector3(1092.3799488006964, -87.0096731561909, 8.819781492451398), new THREE.Vector3(-996.8014175956177, -72.92769313897082, -2.437635047010332), new THREE.Vector3(122.76717114459231, -84.03747572321888, 38.81146345514961)]);
 
 			render();
 
@@ -273,9 +292,9 @@
 
 			} else {
 
-				object.position.x = Math.random() * 1000 - 500;
+				object.position.x = Math.random() * width - (width / 2);
 				object.position.y = Math.random() * 600;
-				object.position.z = Math.random() * 800 - 400;
+				object.position.z = Math.random() * height - (height / 2);
 
 			}
 
@@ -340,19 +359,19 @@
 
 		}
 
-		function exportSpline() {
-
+		function toStringSpline() {
 			const strplace = [];
-
 			for (let i = 0; i < splinePointsLength; i++) {
-
 				const p = splineHelperObjects[i].position;
 				strplace.push(`new THREE.Vector3(${p.x}, ${p.y}, ${p.z})`);
-
 			}
+			// console.log(strplace.join(',\n'));
+			return '[' + (strplace.join(', ')) + ']';
 
-			console.log(strplace.join(',\n'));
-			const data = '[' + (strplace.join(',\n\t')) + ']';
+		}
+
+		function exportSpline() {
+			const data = toStringSpline()
 
 			// 2. Create a Blob
 			const blob = new Blob([data], { type: 'text/javascript' });
@@ -376,32 +395,31 @@
 		}
 
 		function inMachineCoords(p) {
-			const x = Math.max(50, Math.min(150, (p.x + 1000.0) / 20.0 + 50.0));
-			const y = Math.max(0, Math.min(100, (p.z + 1000.0) / 20.0));
-			const z = Math.max(0, Math.min(5, (p.y + 1000.0) / -160 + 10.0));
+			const x = Math.max(0, Math.min(158, (p.x + width) / 20.0));
+			const y = Math.max(0, Math.min(102, (p.z + 1000.0) / 20.0));
+			const z = Math.max(0, Math.min(5, (p.y + height) / -160 + 10.0));
 			return [x, y, z];
 		}
 
 		function exportGcode() {
 			const gCodeLines = [
 				`; ${JSON.stringify(ip)}`,
+				`; ${toStringSpline()}`,
 				'G21', 'G90', // millimeter and absolute coords
-				'; Begin dip-tap',
-				'G0 Z0 F100 ; Move up',
-				'G0 X10 Y10 F200 ; Move to X10 Y10',
-				'G01 Z4 F400 ; dip',
-				'G01 Z2',
-				'G01 Z4',
-				'G01 Z2',
-				'G01 X15',
-				'G01 X10',
-				'G01 X15',
-				'G0 Z0',
-				'; End dip-tap ',
+				';; Begin dip-tap',
+				';G0 Z0 F100 ; Move up',
+				';G0 X10 Y10 F200 ; Move to X10 Y10',
+				';G01 Z4 F400 ; dip',
+				';G01 Z2',
+				';G01 Z4',
+				';G01 Z2',
+				';G01 X15',
+				';G01 X10',
+				';G01 X15',
+				';G0 Z0',
+				';; End dip-tap ',
 				'; Begin stroke',
 			];
-
-
 
 			const spline = splines['chordal'];
 			const s = Math.sin
@@ -410,7 +428,8 @@
 			const prev = new THREE.Vector3();
 			spline.getPoint(0.0, prev);
 			const [x0, y0, z0] = inMachineCoords(prev);
-			gCodeLines.push(`G0 X${x0.toFixed(4)} Y${y0.toFixed(4)} Z${z0.toFixed(4)}`);
+			gCodeLines.push(`G0 X${x0.toFixed(4)} Y${y0.toFixed(4)}`);
+			gCodeLines.push(`G0 Z${z0.toFixed(4)}`);
 			for (let i = 1; i < ARC_SEGMENTS; i++) {
 				const t = i / ARC_SEGMENTS;
 				spline.getPoint(t, point);
@@ -419,7 +438,7 @@
 				point.z += eval(ip.zfn)
 				const [x, y, z] = inMachineCoords(point);
 				// TODO wouldn't be better to do this rate calc in MachineCoords
-				const feedRateMmPerMinute = Math.max(prev.distanceTo(point) / 1.5, 100);
+				const feedRateMmPerMinute = Math.max(prev.distanceTo(point) * 2, 100);
 
 				gCodeLines.push(`G1 X${x.toFixed(3)} Y${y.toFixed(3)} Z${z.toFixed(3)} F${feedRateMmPerMinute.toFixed(0)}`);
 			}
