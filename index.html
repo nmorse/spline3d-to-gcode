@@ -62,12 +62,7 @@
 
 		const splines = {};
 
-		const ip = {
-			"uniform": false, "tension": 0.5, "centripetal": false, "chordal": true,
-			"xfn": "s(t*193)*500*s(t*3.1415)",
-			"yfn": "c(t*193)*100",
-			"zfn": "c(t*193)*900*s(t*3.1415)"
-		};
+		const ip = { "uniform": false, "tension": 0.5, "centripetal": false, "chordal": true, "xfn": "s(t*293)*300*c(t*3.1415)", "yfn": "c(t*293)*80", "zfn": "c(t*293)*1000*c(t*3.1415)", "addPoint": addPoint, "removePoint": removePoint, "exportSpline": exportSpline, "exportGcode": exportGcode };
 		const width = 1500;
 		const height = 1000;
 		init();
@@ -239,43 +234,13 @@
 			splines.chordal = curve;
 
 			for (const k in splines) {
-
 				const spline = splines[k];
 				scene.add(spline.mesh);
-
 			}
-			// 		[new THREE.Vector3(-871.0246846379905, 598.5967448780741, -901.5082182666416),
-			// new THREE.Vector3(-315.0118663436993, 147.7095566975188, 68.53269599893201),
-			// new THREE.Vector3(676.0174174098237, -3.552568569510669, -425.38774577690276),
-			// new THREE.Vector3(375.26328656336466, 453.0451720749953, 253.88152061504607),
-			// new THREE.Vector3(-855.6602011581937, 404.2834861067285, 639.0907688993439),
-			// new THREE.Vector3(-687.3577638995763, 25.425378846327334, 300.9651326699863),
-			// new THREE.Vector3(710.4478660508158, 121.86437300449234, 468.74385591971406),
-			// new THREE.Vector3(721.3657331554466, 511.37962478745226, 840.5024381127196)]
 
-			// [new THREE.Vector3(-896.391023479346, 573.289566007808, -613.3898666889511),
-			// new THREE.Vector3(-53.56300074753207, 171.49711742836848, -14.495472686253045),
-			// new THREE.Vector3(177.46535603019066, -22.767704440140648, -59.11284885680068),
-			// new THREE.Vector3(33.25623000308098, -20.109578594246443, 359.9701051305256),
-			// new THREE.Vector3(398.85381743635367, 52.248297224273244, 249.0438050973464),
-			// new THREE.Vector3(679.7562883763367, 843.5553727126705, 670.637714086363)]
-
-			// [new THREE.Vector3(-896.391023479346, 573.289566007808, -897.999189727983),
-			// new THREE.Vector3(-53.56300074753207, 171.49711742836848, -14.495472686253045),
-			// new THREE.Vector3(177.46535603019066, -22.767704440140648, -59.11284885680068),
-			// new THREE.Vector3(12.25266692194647, 459.4538036985774, 351.4481679454684),
-			// new THREE.Vector3(912.2464808932779, 154.6829791948904, 297.09382730861284),
-			// new THREE.Vector3(469.1177411745867, -137.20592040845372, -509.67496826816546),
-			// new THREE.Vector3(27.087455936653832, -23.309177208174873, -879.3564844110548),
-			// new THREE.Vector3(-391.7583272094863, -158.192154460209, -110.21677501738102),
-			// new THREE.Vector3(331.36992281326445, 391.0508274280934, 518.6470110341133),
-			// new THREE.Vector3(-288.2549135301134, -122.96266170468584, 908.5409826916089),
-			// new THREE.Vector3(-278.3661958435289, 189.79284301992357, 468.05915317849536),
-			// new THREE.Vector3(-890.7544153498714, -100.04074801752031, 302.7396025897863),
-			// new THREE.Vector3(-244.73476602307434, 124.56748965013426, -241.19597142496642),
-			// new THREE.Vector3(114.80176475568987, -36.69634066339083, -218.69738991578055),
-			// new THREE.Vector3(902.937441609792, 585.0904493002654, -900.4336994345074)]
-			load([new THREE.Vector3(111.56546721968732, -62.32342595664549, 34.922424933634595), new THREE.Vector3(1092.3799488006964, -87.0096731561909, 8.819781492451398), new THREE.Vector3(-996.8014175956177, -72.92769313897082, -2.437635047010332), new THREE.Vector3(122.76717114459231, -84.03747572321888, 38.81146345514961)]);
+			load(
+				[new THREE.Vector3(7.241658733942188, -62.32342595664549, -2.547758951840162), new THREE.Vector3(1344.348051827532, -87.0096731561909, -5.190761966948571), new THREE.Vector3(-1241.8437765033623, -82.38861335173613, -0.1402326033377932), new THREE.Vector3(7.280796464772578, -62.32342595664549, -0.052225567464880385)]
+			);
 
 			render();
 
@@ -339,9 +304,14 @@
 
 		}
 
-		function updateSplineOutline() {
+		function ev(codeStr, env) {
 			const s = Math.sin
 			const c = Math.cos
+			const t = env.t
+			return eval(codeStr)
+		}
+
+		function updateSplineOutline() {
 			for (const k in splines) {
 
 				const spline = splines[k];
@@ -352,7 +322,7 @@
 
 					const t = i / ARC_SEGMENTS;
 					spline.getPoint(t, point);
-					position.setXYZ(i, point.x + eval(ip.xfn), point.y + eval(ip.yfn), point.z + eval(ip.zfn));
+					position.setXYZ(i, point.x + ev(ip.xfn, { t }), point.y + ev(ip.yfn, { t }), point.z + ev(ip.zfn, { t }));
 				}
 				position.needsUpdate = true;
 			}
@@ -403,7 +373,7 @@
 
 		function exportGcode() {
 			const gCodeLines = [
-				`; ${JSON.stringify(ip)}`,
+				`; ${JSON.stringify(ip).slice(0, -1)},"addPoint": addPoint,"removePoint": removePoint,"exportSpline": exportSpline,"exportGcode": exportGcode}`,
 				`; ${toStringSpline()}`,
 				'G21', 'G90', // millimeter and absolute coords
 				';; Begin dip-tap',
@@ -438,8 +408,13 @@
 				point.z += eval(ip.zfn)
 				const [x, y, z] = inMachineCoords(point);
 				// TODO wouldn't be better to do this rate calc in MachineCoords
-				const feedRateMmPerMinute = Math.max(prev.distanceTo(point) * 2, 100);
-
+				const feedRateMmPerMinute = Math.max(prev.distanceTo(point) * 50, 100);
+				// if (i === 400) {
+				// 	console.log(prev.distanceTo(point))
+				// }
+				prev.x = point.x
+				prev.y = point.y
+				prev.z = point.z
 				gCodeLines.push(`G1 X${x.toFixed(3)} Y${y.toFixed(3)} Z${z.toFixed(3)} F${feedRateMmPerMinute.toFixed(0)}`);
 			}
 			gCodeLines.push('G0 Z0')
