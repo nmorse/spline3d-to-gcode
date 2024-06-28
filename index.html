@@ -58,11 +58,11 @@
 		const geometry = new THREE.BoxGeometry(20, 20, 20);
 		let transformControl;
 
-		const ARC_SEGMENTS = 2000;
+		const ARC_SEGMENTS = 4000;
 
 		const splines = {};
 
-		const ip = { "uniform": false, "tension": 0.5, "centripetal": false, "chordal": true, "xfn": "s(t*293)*300*c(t*3.1415)", "yfn": "c(t*293)*80", "zfn": "c(t*293)*1000*c(t*3.1415)", "addPoint": addPoint, "removePoint": removePoint, "exportSpline": exportSpline, "exportGcode": exportGcode };
+		const ip = {"uniform":false,"tension":0.5,"centripetal":false,"chordal":true,"xfn":"s(t*1393)*100*c(t*3.1415)","yfn":"c(t*1393)*80","zfn":"c(t*1393)*300*c(t*3.1415)","addPoint": addPoint,"removePoint": removePoint,"exportSpline": exportSpline,"exportGcode": exportGcode}
 		const width = 1500;
 		const height = 1000;
 		init();
@@ -239,7 +239,7 @@
 			}
 
 			load(
-				[new THREE.Vector3(7.241658733942188, -62.32342595664549, -2.547758951840162), new THREE.Vector3(1344.348051827532, -87.0096731561909, -5.190761966948571), new THREE.Vector3(-1241.8437765033623, -82.38861335173613, -0.1402326033377932), new THREE.Vector3(7.280796464772578, -62.32342595664549, -0.052225567464880385)]
+				[new THREE.Vector3(234.73824279907313, -62.32342595664549, 117.7097173724413), new THREE.Vector3(1029.1777650125384, -87.0096731561909, 232.746502652775), new THREE.Vector3(320.3148022519208, -82.38861335173613, 125.54731815816785), new THREE.Vector3(115.13416460641807, -62.32342595664549, -454.8187768525749), new THREE.Vector3(-664.9070138980061, -75.62926140407853, -78.26205087742642), new THREE.Vector3(237.43376134722007, -161.91228316618765, 121.37122929409759)]
 			);
 
 			render();
@@ -308,6 +308,7 @@
 			const s = Math.sin
 			const c = Math.cos
 			const t = env.t
+			const PI = Math.PI
 			return eval(codeStr)
 		}
 
@@ -392,8 +393,6 @@
 			];
 
 			const spline = splines['chordal'];
-			const s = Math.sin
-			const c = Math.cos
 			const splineMesh = spline.mesh;
 			const prev = new THREE.Vector3();
 			spline.getPoint(0.0, prev);
@@ -403,9 +402,9 @@
 			for (let i = 1; i < ARC_SEGMENTS; i++) {
 				const t = i / ARC_SEGMENTS;
 				spline.getPoint(t, point);
-				point.x += eval(ip.xfn)
-				point.y += eval(ip.yfn)
-				point.z += eval(ip.zfn)
+				point.x += ev(ip.xfn, { t })
+				point.y += ev(ip.yfn, { t })
+				point.z += ev(ip.zfn, { t })
 				const [x, y, z] = inMachineCoords(point);
 				// TODO wouldn't be better to do this rate calc in MachineCoords
 				const feedRateMmPerMinute = Math.max(prev.distanceTo(point) * 50, 100);
