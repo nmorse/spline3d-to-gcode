@@ -5,3 +5,7 @@ From a three.js [spline editor demo](https://threejs.org/examples/?q=spline#webg
 
 ## todo
  * Alter feed rates along the curve
+ * transform path for brush Rotation (add A axis)
+
+## to Run
+$ npx serve-http

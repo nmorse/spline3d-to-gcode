@@ -58,11 +58,14 @@
 		const geometry = new THREE.BoxGeometry(20, 20, 20);
 		let transformControl;
 
-		const ARC_SEGMENTS = 4000;
+		const ARC_SEGMENTS = 1000;
 
 		const splines = {};
 
-		const ip = {"uniform":false,"tension":0.5,"centripetal":false,"chordal":true,"xfn":"s(t*1393)*100*c(t*3.1415)","yfn":"c(t*1393)*80","zfn":"c(t*1393)*300*c(t*3.1415)","addPoint": addPoint,"removePoint": removePoint,"exportSpline": exportSpline,"exportGcode": exportGcode}
+		const ip = {"uniform":false,"tension":0.5,"centripetal":false,"chordal":true,
+		"xfn":"0",
+		"yfn":"0",
+		"zfn":"0","addPoint": addPoint,"removePoint": removePoint,"exportSpline": exportSpline, "feedRate":1000, "exportGcode": exportGcode}
 		const width = 1500;
 		const height = 1000;
 		init();
@@ -154,6 +157,9 @@
 			gui.add(ip, 'addPoint');
 			gui.add(ip, 'removePoint');
 			gui.add(ip, 'exportSpline');
+			gui.add(ip, 'feedRate', 500, 3000).step(100).onChange(function (value) {
+				feedRate = value;
+			});
 			gui.add(ip, 'exportGcode');
 			gui.add(ip, 'xfn').onChange(render);
 			gui.add(ip, 'yfn').onChange(render);
@@ -341,6 +347,8 @@
 
 		}
 
+		var feedRate = 1000;
+
 		function exportSpline() {
 			const data = toStringSpline()
 
@@ -374,7 +382,7 @@
 
 		function exportGcode() {
 			const gCodeLines = [
-				`; ${JSON.stringify(ip).slice(0, -1)},"addPoint": addPoint,"removePoint": removePoint,"exportSpline": exportSpline,"exportGcode": exportGcode}`,
+				`; ${JSON.stringify(ip).slice(0, -1)},"addPoint": addPoint,"removePoint": removePoint,"exportSpline": exportSpline,"feedRate": feedRate,"exportGcode": exportGcode}`,
 				`; ${toStringSpline()}`,
 				'G21', 'G90', // millimeter and absolute coords
 				';; Begin dip-tap',
