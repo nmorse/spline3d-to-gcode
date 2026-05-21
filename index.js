@@ -290,22 +290,22 @@
 				const position = splineMesh.geometry.attributes.position;
 
                 let brushRotation = 0;//Math.PI / 4
-                const brushAngle = Math.PI / 4;
-                const brushLength = 30;
+                const brushAngle = -Math.PI / 4;
+                const brushLength = 300;
                 const brushOffset = new THREE.Vector3(0, 0, 0);
                 const prev = new THREE.Vector3();
                 spline.getPoint(0.0, prev);
 
 
-                for (let i = 0; i < ARC_SEGMENTS; i+=3) {
+                for (let i = 1; i < ARC_SEGMENTS; i+=3) {
 
 					const t = i / ARC_SEGMENTS;
 
-    				brushRotation = angle(new THREE.Vector3().subVectors(point, prev).normalize());
+					spline.getPoint(t, point);
+
+                    brushRotation = angle(new THREE.Vector3().subVectors(point, prev).normalize());
 	    			setBrushOffset(brushOffset, brushRotation, brushAngle, brushLength);
 
-
-					spline.getPoint(t, point);
                     const offsetPoint = new THREE.Vector3().addVectors(point, brushOffset);
 					position.setXYZ(i, point.x, point.y, point.z);
 					position.setXYZ(i+1, offsetPoint.x, offsetPoint.y, offsetPoint.z);
