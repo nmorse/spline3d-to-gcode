@@ -208,7 +208,8 @@
 			}
 
 			load(
-				[new THREE.Vector3(255.7472271021835, 593.5759567192866, -111.88488858816189), new THREE.Vector3(1029.1777650125384, -87.0096731561909, 232.746502652775), new THREE.Vector3(320.3148022519208, -82.38861335173613, 125.54731815816785), new THREE.Vector3(115.13416460641807, -62.32342595664549, -454.8187768525749), new THREE.Vector3(-664.9070138980061, -75.62926140407853, -78.26205087742642), new THREE.Vector3(246.91175663978728, 595.1632436560665, -102.12713818251699)]
+				[new THREE.Vector3(1071.0466413688443, 593.5759567192866, 131.03290006234533), new THREE.Vector3(1029.1777650125384, -87.0096731561909, 232.746502652775), new THREE.Vector3(320.3148022519208, -82.38861335173613, 125.54731815816785), new THREE.Vector3(115.13416460641807, -62.32342595664549, -454.8187768525749), new THREE.Vector3(-664.9070138980061, -75.62926140407853, -78.26205087742642), new THREE.Vector3(-901.4615805815979, 590.8108341689484, -243.14638955173552)]
+				//[new THREE.Vector3(255.7472271021835, 593.5759567192866, -111.88488858816189), new THREE.Vector3(1029.1777650125384, -87.0096731561909, 232.746502652775), new THREE.Vector3(320.3148022519208, -82.38861335173613, 125.54731815816785), new THREE.Vector3(115.13416460641807, -62.32342595664549, -454.8187768525749), new THREE.Vector3(-664.9070138980061, -75.62926140407853, -78.26205087742642), new THREE.Vector3(246.91175663978728, 595.1632436560665, -102.12713818251699)]
 			);
 
 			render();
@@ -383,6 +384,7 @@
 				'; Begin stroke',
 			];
 			let brushRotation = 0;//Math.PI / 4
+			let prevBrushHandle = new THREE.Vector3(0, 0, 0);
 			const brushAngle = Math.PI / 4;
 			const brushLength = 30;
 			const brushOffset = new THREE.Vector3(0, 0, 0);
@@ -396,21 +398,31 @@
 			for (let i = 1; i < ARC_SEGMENTS; i++) {
 				const t = i / ARC_SEGMENTS;
 				spline.getPoint(t, point);
-				brushRotation = angle(new THREE.Vector3().subVectors(point, prev).normalize());
+				const pt = new THREE.Vector3();
+				pt.x = point.x
+				pt.y = point.y
+				pt.z = point.z
+				const pv = new THREE.Vector3();
+				pv.x = prev.x
+				pv.y = prev.y
+				pv.z = prev.z
+				brushRotation = angle(new THREE.Vector3().subVectors(pt, pv).normalize());
 				setBrushOffset(brushOffset, brushRotation, brushAngle, brushLength);
 				// point.x += ev(ip.xfn, { t })
 				// point.y += ev(ip.yfn, { t })
 				// point.z += ev(ip.zfn, { t })
-				const [x, y, z] = inMachineCoords(point.add(brushOffset));
-				// TODO wouldn't be better to do this rate calc in MachineCoords
-				const feedRateMmPerMinute = Math.max(prev.distanceTo(point) * 50, 100);
-				// if (i === 400) {
-				// 	console.log(prev.distanceTo(point))
-				// }
+				const [x, y, z] = inMachineCoords(pt.add(brushOffset));
+				// rate calc in MachineCoords 
+				const feedRateMmPerMinute = Math.max(prevBrushHandle.distanceTo(new THREE.Vector3(x, y, z)) * 50, 100);
+
+				gCodeLines.push(`G1 X${x.toFixed(3)} Y${y.toFixed(3)} Z${z.toFixed(2)} A${brushRotation.toFixed(2)} F${feedRateMmPerMinute.toFixed(0)}`);
+
 				prev.x = point.x
 				prev.y = point.y
 				prev.z = point.z
-				gCodeLines.push(`G1 X${x.toFixed(3)} Y${y.toFixed(3)} Z${z.toFixed(2)} F${feedRateMmPerMinute.toFixed(0)}`);
+				prevBrushHandle.x = x
+				prevBrushHandle.y = y
+				prevBrushHandle.z = z
 			}
 			gCodeLines.push('G0 Z0')
 			gCodeLines.push('G0 X0 Y0', '; End stroke ')
