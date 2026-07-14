@@ -29,8 +29,13 @@
 		"xfn":"0",
 		"yfn":"0",
 		"zfn":"0","addPoint": addPoint,"removePoint": removePoint,"exportSpline": exportSpline, "feedRate":1000, "exportGcode": exportGcode}
-		const width = 1500;
-		const height = 1000;
+
+		const machXmm = 320;  // 158
+		const machYmm = 280;  // 102
+		const machZmm = 200;  //  16
+
+		const width = machXmm * 10;
+		const height = machYmm * 10;
 		init();
 
 		function GridGeometry(width = 1, height = 1, wSeg = 1, hSeg = 1, tx = 0, ty = 0, lExt = [0, 0]) {
@@ -73,8 +78,8 @@
 			light.shadow.camera.near = 1000;
 			light.shadow.camera.far = 20000;
 			light.shadow.bias = - 0.000222;
-			light.shadow.mapSize.width = 1024;
-			light.shadow.mapSize.height = 1024;
+			light.shadow.mapSize.width = width;
+			light.shadow.mapSize.height = height;
 			scene.add(light);
 
 			const planeGeometry = new THREE.PlaneGeometry(width * 2, height * 2);
@@ -91,7 +96,7 @@
 			// helper.material.opacity = 0.25;
 			// helper.material.transparent = true;
 			// scene.add(helper);
-			const g2 = GridGeometry(width * 2, height * 2, 15, 10, -width, -height, [1, 1]);
+			const g2 = GridGeometry(width * 2, height * 2, width/200, height/200, -width, -height, [1, 1]);
 			g2.rotateX(Math.PI * 0.5);
 			//g2.translateX(-width)
 			//g2.translateY(-height)
@@ -356,16 +361,10 @@
 			URL.revokeObjectURL(url); // Free up memory
 
 		}
-		const machXmm = 320;
-		const machYmm = 320;
-		const machZmm = 210;
 		function inMachineCoords(p) {
-			// const x = Math.max(0, Math.min(158, (p.x + width) / 20.0));
-			// const y = Math.max(0, Math.min(102, (p.z + 1000.0) / 20.0));
-			// const z = Math.max(0, Math.min(16, (p.y + height) / -160 + 10.0));
 			const x = Math.max(0, Math.min(machXmm, (p.x + width) / 20.0));
 			const y = Math.max(0, Math.min(machYmm, (p.z + 1000.0) / 20.0));
-			const z = Math.max(0, Math.min(machZmm, (p.y + height) / -160 + 10.0));
+			const z = Math.max(0, Math.min(machZmm, (p.y + height) / 20 - 100.0));
 			return [x, y, z];
 		}
 
@@ -390,6 +389,7 @@
 			];
 			let brushRotation = 0;//Math.PI / 4
 			let prevBrushHandle = new THREE.Vector3(0, 0, 0);
+			const zSafe = 200;
 			const brushAngle = Math.PI / 4;
 			const brushLength = 30;
 			const brushOffset = new THREE.Vector3(0, 0, 0);
@@ -398,8 +398,9 @@
 			const prev = new THREE.Vector3();
 			spline.getPoint(0.0, prev);
 			const [x0, y0, z0] = inMachineCoords(prev);
-			gCodeLines.push(`G0 X${x0.toFixed(4)} Y${y0.toFixed(4)}`);
-			gCodeLines.push(`G0 Z${z0.toFixed(4)}`);
+			gCodeLines.push(`G0 Z${zSafe.toFixed(1)}`);
+			gCodeLines.push(`G0 X${x0.toFixed(2)} Y${y0.toFixed(2)}`);
+			gCodeLines.push(`G0 Z${z0.toFixed(2)}`);
 			for (let i = 1; i < ARC_SEGMENTS; i++) {
 				const t = i / ARC_SEGMENTS;
 				spline.getPoint(t, point);
@@ -418,9 +419,9 @@
 				// point.z += ev(ip.zfn, { t })
 				const [x, y, z] = inMachineCoords(pt.add(brushOffset));
 				// rate calc in MachineCoords 
-				const feedRateMmPerMinute = Math.max(prevBrushHandle.distanceTo(new THREE.Vector3(x, y, z)) * 50, 100);
+				const feedRateMmPerMinute = Math.max(10, Math.min(prevBrushHandle.distanceTo(new THREE.Vector3(x, y, z)) * 3000, 4000));
 
-				gCodeLines.push(`G1 X${x.toFixed(3)} Y${y.toFixed(3)} Z${z.toFixed(2)} A${brushRotation.toFixed(2)} F${feedRateMmPerMinute.toFixed(0)}`);
+				gCodeLines.push(`G1 X${x.toFixed(2)} Y${y.toFixed(2)} Z${z.toFixed(2)} A${brushRotation.toFixed(2)} F${feedRateMmPerMinute.toFixed(0)}`);
 
 				prev.x = point.x
 				prev.y = point.y
@@ -429,7 +430,7 @@
 				prevBrushHandle.y = y
 				prevBrushHandle.z = z
 			}
-			gCodeLines.push('G0 Z0')
+			gCodeLines.push(`G0 Z${zSafe.toFixed(4)}`);
 			gCodeLines.push('G0 X0 Y0', '; End stroke ')
             
             // download the gcode as a file
