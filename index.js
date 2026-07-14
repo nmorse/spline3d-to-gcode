@@ -356,11 +356,16 @@
 			URL.revokeObjectURL(url); // Free up memory
 
 		}
-
+		const machXmm = 320;
+		const machYmm = 320;
+		const machZmm = 210;
 		function inMachineCoords(p) {
-			const x = Math.max(0, Math.min(158, (p.x + width) / 20.0));
-			const y = Math.max(0, Math.min(102, (p.z + 1000.0) / 20.0));
-			const z = Math.max(0, Math.min(16, (p.y + height) / -160 + 10.0));
+			// const x = Math.max(0, Math.min(158, (p.x + width) / 20.0));
+			// const y = Math.max(0, Math.min(102, (p.z + 1000.0) / 20.0));
+			// const z = Math.max(0, Math.min(16, (p.y + height) / -160 + 10.0));
+			const x = Math.max(0, Math.min(machXmm, (p.x + width) / 20.0));
+			const y = Math.max(0, Math.min(machYmm, (p.z + 1000.0) / 20.0));
+			const z = Math.max(0, Math.min(machZmm, (p.y + height) / -160 + 10.0));
 			return [x, y, z];
 		}
 
