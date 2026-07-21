@@ -213,7 +213,9 @@
 			}
 
 			load(
-				[new THREE.Vector3(1071.0466413688443, 593.5759567192866, 131.03290006234533), new THREE.Vector3(1029.1777650125384, -87.0096731561909, 232.746502652775), new THREE.Vector3(320.3148022519208, -82.38861335173613, 125.54731815816785), new THREE.Vector3(115.13416460641807, -62.32342595664549, -454.8187768525749), new THREE.Vector3(-664.9070138980061, -75.62926140407853, -78.26205087742642), new THREE.Vector3(-901.4615805815979, 590.8108341689484, -243.14638955173552)]
+				[new THREE.Vector3(2245.005488332935, 593.5759567192866, 2052.291441298524), new THREE.Vector3(2232.963763035519, -91.50717968970577, 1724.6090487347124), new THREE.Vector3(-2356.9597621445578, -311.626662052783, 426.32289848206653), new THREE.Vector3(2110.5571955679306, -257.1802730246945, -652.8119507380368), new THREE.Vector3(-2294.985699436298, -76.25575392523179, -1772.5544583532583), new THREE.Vector3(-2091.6961909893053, 683.9992307836517, -2274.05830499889)]
+				// [new THREE.Vector3(837.2472948298409, 593.5759567192866, 691.7530285625204), new THREE.Vector3(1010.3806405430956, -187.01434124955085, 184.1999020252184), new THREE.Vector3(-960.9306600733564, -174.26362365780747, -81.51383732401013), new THREE.Vector3(1122.1827045362943, -182.63309969140843, -259.9542775336672), new THREE.Vector3(-1130.6020399047818, -47.191631548145295, -443.58296161811586), new THREE.Vector3(-1108.9904671694449, 683.9992307836517, -713.785931298165)]
+				// [new THREE.Vector3(1071.0466413688443, 593.5759567192866, 131.03290006234533), new THREE.Vector3(1029.1777650125384, -87.0096731561909, 232.746502652775), new THREE.Vector3(320.3148022519208, -82.38861335173613, 125.54731815816785), new THREE.Vector3(115.13416460641807, -62.32342595664549, -454.8187768525749), new THREE.Vector3(-664.9070138980061, -75.62926140407853, -78.26205087742642), new THREE.Vector3(-901.4615805815979, 590.8108341689484, -243.14638955173552)]
 				//[new THREE.Vector3(255.7472271021835, 593.5759567192866, -111.88488858816189), new THREE.Vector3(1029.1777650125384, -87.0096731561909, 232.746502652775), new THREE.Vector3(320.3148022519208, -82.38861335173613, 125.54731815816785), new THREE.Vector3(115.13416460641807, -62.32342595664549, -454.8187768525749), new THREE.Vector3(-664.9070138980061, -75.62926140407853, -78.26205087742642), new THREE.Vector3(246.91175663978728, 595.1632436560665, -102.12713818251699)]
 			);
 
@@ -296,8 +298,8 @@
 				const position = splineMesh.geometry.attributes.position;
 
                 let brushRotation = 0;//Math.PI / 4
-                const brushAngle = -Math.PI / 4;
-                const brushLength = 300;
+                const brushAngle = -Math.PI / 4; // from vertical
+                const brushLengthMm = 80;
                 const brushOffset = new THREE.Vector3(0, 0, 0);
                 const prev = new THREE.Vector3();
                 spline.getPoint(0.0, prev);
@@ -310,7 +312,7 @@
 					spline.getPoint(t, point);
 
                     brushRotation = angle(new THREE.Vector3().subVectors(point, prev).normalize());
-	    			setBrushOffset(brushOffset, brushRotation, brushAngle, brushLength);
+	    			setBrushOffset(brushOffset, brushRotation, brushAngle, brushLengthMm*10);
 
                     const offsetPoint = new THREE.Vector3().addVectors(point, brushOffset);
 					position.setXYZ(i, point.x, point.y, point.z);
@@ -368,6 +370,23 @@
 			return [x, y, z];
 		}
 
+		let last_br_deg = null;
+		let offset_br_deg = null;
+		function brushMachineRotation(brushRotationRad) {
+			let br_deg = brushRotationRad * 57.29578;
+			if (last_br_deg === null) {
+				last_br_deg = br_deg
+			}
+			// while (br < 0) {
+			// 	br_deg += 360;
+			// }
+			// if (offset_br === null) {
+			// 	offset_br = br * StepsPerRadian
+			// }
+
+			return br_deg // * StepsPerRadian - offset_br;
+		}
+
 		function exportGcode() {
 			const gCodeLines = [
 				`; ${JSON.stringify(ip).slice(0, -1)},"addPoint": addPoint,"removePoint": removePoint,"exportSpline": exportSpline,"feedRate": feedRate,"exportGcode": exportGcode}`,
@@ -390,8 +409,8 @@
 			let brushRotation = 0;//Math.PI / 4
 			let prevBrushHandle = new THREE.Vector3(0, 0, 0);
 			const zSafe = 200;
-			const brushAngle = Math.PI / 4;
-			const brushLength = 30;
+			const brushAngle = Math.PI / 4; // from vertical
+			const brushLengthMm = 80;
 			const brushOffset = new THREE.Vector3(0, 0, 0);
 			const spline = splines['chordal'];
 			const splineMesh = spline.mesh;
@@ -413,15 +432,15 @@
 				pv.y = prev.y
 				pv.z = prev.z
 				brushRotation = angle(new THREE.Vector3().subVectors(pt, pv).normalize());
-				setBrushOffset(brushOffset, brushRotation, brushAngle, brushLength);
+				setBrushOffset(brushOffset, brushRotation, brushAngle, brushLengthMm*10);
 				// point.x += ev(ip.xfn, { t })
 				// point.y += ev(ip.yfn, { t })
 				// point.z += ev(ip.zfn, { t })
 				const [x, y, z] = inMachineCoords(pt.add(brushOffset));
 				// rate calc in MachineCoords 
-				const feedRateMmPerMinute = Math.max(10, Math.min(prevBrushHandle.distanceTo(new THREE.Vector3(x, y, z)) * 3000, 4000));
+				const feedRateMmPerMinute = Math.max(10, Math.min(prevBrushHandle.distanceTo(new THREE.Vector3(x, y, z)) * 3000, 10000));
 
-				gCodeLines.push(`G1 X${x.toFixed(2)} Y${y.toFixed(2)} Z${z.toFixed(2)} A${brushRotation.toFixed(2)} F${feedRateMmPerMinute.toFixed(0)}`);
+				gCodeLines.push(`G1 X${x.toFixed(2)} Y${y.toFixed(2)} Z${z.toFixed(2)} A${brushMachineRotation(brushRotation).toFixed(2)} F${feedRateMmPerMinute.toFixed(0)}`);
 
 				prev.x = point.x
 				prev.y = point.y
@@ -472,10 +491,10 @@
 			const binormal = new THREE.Vector3().crossVectors(dir, normal);
 			const angle = Math.atan2(binormal.y, normal.y)
 		*/
-		function setBrushOffset(brushOffset, brushRotation, brushAngle, brushLength) {
-			brushOffset.x = Math.cos(brushRotation) * Math.sin(brushAngle) * brushLength;
-			brushOffset.z = Math.sin(brushRotation) * Math.sin(brushAngle) * brushLength;
-			brushOffset.y = Math.cos(brushAngle) * brushLength;
+		function setBrushOffset(brushOffset, brushRotation, brushAngle, brushLengthMm) {
+			brushOffset.x = Math.cos(brushRotation) * Math.sin(brushAngle) * brushLengthMm;
+			brushOffset.z = Math.sin(brushRotation) * Math.sin(brushAngle) * brushLengthMm;
+			brushOffset.y = Math.cos(brushAngle) * brushLengthMm;
 		}
 
 		function load(new_positions) {
