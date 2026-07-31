@@ -381,10 +381,11 @@ function initZrange(spline) {
 }
 
 function zExpAdjust(z_orig) {
-	const z_norm = (z_orig-ZMin) / ZRange
-	const z_exp_norm = z_norm * z_norm
-	const z_adjusted = z_exp_norm * ZRange + ZMin
-	return z_adjusted;
+	//const z_norm = (z_orig-ZMin) / ZRange
+	//const z_exp_norm = z_norm * z_norm
+	//const z_adjusted = z_exp_norm * ZRange + ZMin
+	//return z_adjusted;
+	return z_orig
 }
 
 function inMachineCoords(p) {
@@ -429,10 +430,10 @@ function exportGcode() {
 		';G0 Z0',
 		';; End dip-tap ',
 		'; YZ adjustments',
-		'#<y1>=100 #<y2>=0',
-		'#<z1>=100 #<z2>=125',
-		'G0 Y#<y1> Z#<z1>',
-		'G92 Y#<y2> Z#<z2>',
+		';#<y1>=100 #<y2>=0',
+		';#<z1>=100 #<z2>=125',
+		'G0 Y100 Z100',
+		'G92 Y100 Z125',
 		'; Begin stroke',
 	];
 	let brushRotation = 0;//Math.PI / 4
@@ -485,10 +486,10 @@ function exportGcode() {
 	}
 	gCodeLines.push(`G0 Z${zSafe.toFixed(4)}`);
 	gCodeLines.push('; YZ re-adjustments')
-	gCodeLines.push('G0  Y#<y2> Z#<z2>')
-	gCodeLines.push('G92 Y#<y1> Z#<z1>')
+	gCodeLines.push('G0  Y100 Z125')
+	gCodeLines.push('G92 Y100 Z100')
 		
-	gCodeLines.push('G0 X0 Y0', '; End stroke ')
+	gCodeLines.push('G0 X0', '; End stroke ')
 	
 	// download the gcode as a file
 
