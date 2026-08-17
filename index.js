@@ -214,7 +214,8 @@ function init() {
 	}
 
 	load(
-[new THREE.Vector3(2624.581636315353, 593.5759567192866, 2052.291441298524), new THREE.Vector3(2313.7276346545223, -102.89612802219693, 1724.6090487347124), new THREE.Vector3(2222.963763035519, -103.09784691186873, 1721.6090487347124), new THREE.Vector3(-2356.9597621445578, -135.8873402105778, 424.3387771924762), new THREE.Vector3(2110.5571955679306, -130.25569540630806, -652.8119507380368), new THREE.Vector3(-2294.985699436298, -120.04847225947607, -1772.5544583532583), new THREE.Vector3(-2432.7569471644356, -118.38179104450577, -1762.5544583532583), new THREE.Vector3(-2592.8657308910288, 683.9992307836517, -2042.2056515417355)]
+[new THREE.Vector3(1090.890665653639, 593.5759567192866, 2052.291441298524), new THREE.Vector3(659.5743958914084, -112.2139316827628, 1714.678308738237), new THREE.Vector3(-79.7164037556305, -145.0279633844146, 1721.6090487347124), new THREE.Vector3(-1020.9651203326828, -130.51153273940167, 2090.2759617232778), new THREE.Vector3(-1728.305870763728, -141.53215262916774, 930.3961039848248), new THREE.Vector3(-566.4455411662054, -153.49896622818835, 777.8178751999585), new THREE.Vector3(-940.4372711336629, -136.7269809952894, 1780.9810798256083), new THREE.Vector3(-1325.5341516278431, -146.60122155760916, 1125.2438538479125), new THREE.Vector3(-854.2075497308766, -151.01443016582266, 1026.5865870028729), new THREE.Vector3(-863.9615693433259, 277.9221166596704, 1382.2863964011246)]
+        // [new THREE.Vector3(2624.581636315353, 593.5759567192866, 2052.291441298524), new THREE.Vector3(2313.7276346545223, -102.89612802219693, 1724.6090487347124), new THREE.Vector3(2222.963763035519, -103.09784691186873, 1721.6090487347124), new THREE.Vector3(-2356.9597621445578, -135.8873402105778, 424.3387771924762), new THREE.Vector3(2110.5571955679306, -130.25569540630806, -652.8119507380368), new THREE.Vector3(-2294.985699436298, -120.04847225947607, -1772.5544583532583), new THREE.Vector3(-2432.7569471644356, -118.38179104450577, -1762.5544583532583), new THREE.Vector3(-2592.8657308910288, 683.9992307836517, -2042.2056515417355)]
 		// [new THREE.Vector3(837.2472948298409, 593.5759567192866, 691.7530285625204), new THREE.Vector3(1010.3806405430956, -187.01434124955085, 184.1999020252184), new THREE.Vector3(-960.9306600733564, -174.26362365780747, -81.51383732401013), new THREE.Vector3(1122.1827045362943, -182.63309969140843, -259.9542775336672), new THREE.Vector3(-1130.6020399047818, -47.191631548145295, -443.58296161811586), new THREE.Vector3(-1108.9904671694449, 683.9992307836517, -713.785931298165)]
 		// [new THREE.Vector3(1071.0466413688443, 593.5759567192866, 131.03290006234533), new THREE.Vector3(1029.1777650125384, -87.0096731561909, 232.746502652775), new THREE.Vector3(320.3148022519208, -82.38861335173613, 125.54731815816785), new THREE.Vector3(115.13416460641807, -62.32342595664549, -454.8187768525749), new THREE.Vector3(-664.9070138980061, -75.62926140407853, -78.26205087742642), new THREE.Vector3(-901.4615805815979, 590.8108341689484, -243.14638955173552)]
 		//[new THREE.Vector3(255.7472271021835, 593.5759567192866, -111.88488858816189), new THREE.Vector3(1029.1777650125384, -87.0096731561909, 232.746502652775), new THREE.Vector3(320.3148022519208, -82.38861335173613, 125.54731815816785), new THREE.Vector3(115.13416460641807, -62.32342595664549, -454.8187768525749), new THREE.Vector3(-664.9070138980061, -75.62926140407853, -78.26205087742642), new THREE.Vector3(246.91175663978728, 595.1632436560665, -102.12713818251699)]
@@ -282,13 +283,13 @@ function removePoint() {
 
 }
 
-function ev(codeStr, env) {
-	const s = Math.sin
-	const c = Math.cos
-	const t = env.t
-	const PI = Math.PI
-	return eval(codeStr)
-}
+// function ev(codeStr, env) {
+// 	const s = Math.sin
+// 	const c = Math.cos
+// 	const t = env.t
+// 	const PI = Math.PI
+// 	return eval(codeStr)
+// }
 
 function updateSplineOutline() {
 	for (const k in splines) {
@@ -364,7 +365,7 @@ function exportSpline() {
 	URL.revokeObjectURL(url); // Free up memory
 
 }
-function initZrange(spline) {
+function initZRange(spline) {
 	ZMax = -100000.0
 	ZMin = 100000.0
 	for (let i = 1; i < ARC_SEGMENTS; i++) {
@@ -380,6 +381,7 @@ function initZrange(spline) {
 	ZRange = ZMax - ZMin 
 }
 
+// Exponentially compress the bottom of the z range (under construction emoji here)
 function zExpAdjust(z_orig) {
 	//const z_norm = -(z_orig-ZMin) / ZRange
 	//const z_exp_norm = z_norm * z_norm
@@ -396,20 +398,27 @@ function inMachineCoords(p) {
 }
 
 let last_br_deg = null;
-let offset_br_deg = null;
+let offset_br_deg = 0;
 function brushMachineRotation(brushRotationRad) {
-	let br_deg = brushRotationRad * 57.29578;
+	
+	let br_deg = brushRotationRad * 57.29578
+	// bp_deg will range from -180 to 180 degrees
+
+	console.log(br_deg)
 	if (last_br_deg === null) {
 		last_br_deg = br_deg
 	}
-	// while (br < 0) {
-	// 	br_deg += 360;
-	// }
-	// if (offset_br === null) {
-	// 	offset_br = br * StepsPerRadian
-	// }
-
-	return br_deg // * StepsPerRadian - offset_br;
+	const dif = last_br_deg - br_deg
+	if (Math.abs(dif) > 200) {
+		if (dif > 0) {
+			offset_br_deg += 360
+		}
+		else {
+			offset_br_deg -= 360
+		}
+	}
+	last_br_deg = br_deg
+	return br_deg + offset_br_deg
 }
 
 function exportGcode() {
@@ -448,7 +457,7 @@ function exportGcode() {
 	const splineMesh = spline.mesh;
 	const prev = new THREE.Vector3();
 	spline.getPoint(0.0, prev);
-	initZrange(spline);
+	initZRange(spline);
 	const [x0, y0, z0] = inMachineCoords(prev);
 	gCodeLines.push(`G0 Z${zSafe.toFixed(1)}`);
 	gCodeLines.push(`G0 X${x0.toFixed(2)} Y${y0.toFixed(2)}`);
