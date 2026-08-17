@@ -381,9 +381,9 @@ function initZrange(spline) {
 }
 
 function zExpAdjust(z_orig) {
-	//const z_norm = (z_orig-ZMin) / ZRange
+	//const z_norm = -(z_orig-ZMin) / ZRange
 	//const z_exp_norm = z_norm * z_norm
-	//const z_adjusted = z_exp_norm * ZRange + ZMin
+	//const z_adjusted = -z_exp_norm * ZRange + ZMin
 	//return z_adjusted;
 	return z_orig
 }
