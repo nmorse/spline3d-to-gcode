@@ -398,13 +398,12 @@ function inMachineCoords(p) {
 }
 
 let last_br_deg = null;
-let offset_br_deg = 0;
+let offset_br_deg = 90;
 function brushMachineRotation(brushRotationRad) {
 	
 	let br_deg = brushRotationRad * 57.29578
 	// bp_deg will range from -180 to 180 degrees
 
-	console.log(br_deg)
 	if (last_br_deg === null) {
 		last_br_deg = br_deg
 	}
@@ -438,11 +437,11 @@ function exportGcode() {
 		';G01 X15',
 		';G0 Z0',
 		';; End dip-tap ',
-		'; YZ adjustments',
+		'; XYZ adjustments',
 		';#<y1>=100 #<y2>=0',
 		';#<z1>=100 #<z2>=125',
-		'G0 Y100 Z100',
-		'G92 Y100 Z125',
+		'G0  X100 Y100 Z100',
+		'G92 X100 Y100 Z125',
 		'; Begin stroke',
 	];
 	let brushRotation = 0;//Math.PI / 4
@@ -494,11 +493,11 @@ function exportGcode() {
 		prevBrushHandle.z = z
 	}
 	gCodeLines.push(`G0 Z${zSafe.toFixed(4)}`);
-	gCodeLines.push('; YZ re-adjustments')
-	gCodeLines.push('G0  Y100 Z125')
-	gCodeLines.push('G92 Y100 Z100')
+	gCodeLines.push('; XYZ re-adjustments')
+	gCodeLines.push('G0  X100 Y100 Z125')
+	gCodeLines.push('G92 X100 Y100 Z100')
 		
-	gCodeLines.push('G0 X0', '; End stroke ')
+	gCodeLines.push('G0 X0 A0', '; End stroke ')
 	
 	// download the gcode as a file
 
